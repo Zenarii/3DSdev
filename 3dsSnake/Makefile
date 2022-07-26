@@ -41,6 +41,10 @@ GRAPHICS	:=	gfx
 ROMFS		:=	romfs
 GFXBUILD	:=	$(ROMFS)/gfx
 
+APP_TITLE := Snake
+APP_DESCRIPTION := A simple snake game for the 3ds
+APP_AUTHOR := abiab
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
