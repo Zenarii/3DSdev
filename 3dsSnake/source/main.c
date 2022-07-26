@@ -8,6 +8,8 @@
 #define SCREEN_WIDTH  400
 #define SCREEN_HEIGHT 240
 
+static int current_state;
+
 #include "snake.h"
 
 //---------------------------------------------------------------------------------
@@ -26,7 +28,9 @@ int main(int argc, char* argv[]) {
     
     u32 clear_colour = C2D_Color32(0x00, 0x00, 0x00, 0xFF);
     
-    GameState game_state = GameStateInit();
+    GameState  game_state  = GameStateInit();
+    DeathState death_state = {0};
+    current_state = STATE_GAME;
     
     // Main loop
     while (aptMainLoop())
@@ -38,15 +42,16 @@ int main(int argc, char* argv[]) {
         if (kDown & KEY_START)
             break; // break in order to return to hbmenu
         printf("\x1b[1;1HSnake for 3DS by abiab");
-        printf("\x1b[3;1HCPU:     %6.2f%%\x1b[K", C3D_GetProcessingTime()*6.0f);
-        printf("\x1b[4;1HGPU:     %6.2f%%\x1b[K", C3D_GetDrawingTime()*6.0f);
-        printf("\x1b[5;1HCmdBuf:  %6.2f%%\x1b[K", C3D_GetCmdBufUsage()*100.0f);
+        printf("\x1b[7;1HCPU:     %6.2f%%\x1b[K", C3D_GetProcessingTime()*6.0f);
+        printf("\x1b[8;1HGPU:     %6.2f%%\x1b[K", C3D_GetDrawingTime()*6.0f);
+        printf("\x1b[9;1HCmdBuf:  %6.2f%%\x1b[K", C3D_GetCmdBufUsage()*100.0f);
         
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
         C2D_TargetClear(top, clear_colour);
         C2D_SceneBegin(top);
         
-        GameStep(&game_state);
+        if(current_state == STATE_GAME)       GameStep(&game_state);
+        else if(current_state == STATE_DEATH) DeathStep(&death_state, &game_state);
         
         C3D_FrameEnd(0);
     }
