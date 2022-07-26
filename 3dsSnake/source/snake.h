@@ -12,6 +12,8 @@
 
 #define TIME_STEPS_PER_MOVE 10
 
+#define SAVE_FILE_PATH "snake_save.txt"
+
 enum Directions {
     DIR_LEFT,
     DIR_RIGHT,
@@ -46,6 +48,11 @@ struct Snake {
     int body_length;
     v2i body[MAX_SNAKE_LENGTH];
 };
+
+//
+// ~fileio
+//
+
 
 //
 //~output
@@ -128,6 +135,7 @@ struct GameState {
     Snake snake;
     v2i food;
     int score;
+    int high_score;
 };
 
 void GameStep(GameState * game_state) {
@@ -160,6 +168,9 @@ void GameStep(GameState * game_state) {
             snake->body[snake->body_length] = snake->body[snake->body_length-1];
             snake->body_length++;
             game_state->score++;
+            if(game_state->score > game_state->high_score)
+                game_state->high_score = game_state->score;
+            
             game_state->food = GetFreeSpace(snake);
         }
         
@@ -176,7 +187,14 @@ void GameStep(GameState * game_state) {
             }
         }
         
-        if(out_of_bounds || snake_self_collide) current_state = STATE_DEATH;
+        if(out_of_bounds || snake_self_collide) {
+            current_state = STATE_DEATH;
+            FILE * file = fopen(SAVE_FILE_PATH, "w");
+            if(file) {
+                fprintf(file, "%d", game_state->high_score);
+            }
+            fclose(file);
+        }
     }
     
     //
@@ -188,11 +206,18 @@ void GameStep(GameState * game_state) {
     
     //print out the score
     printf("\x1b[2;1HYour Score: %d\x1b[K", game_state->score);
-    //TODO(abi): print highscore
+    printf("\x1b[3;1HHigh Score: %d\x1b[K", game_state->high_score);
 }
 
 GameState GameStateInit() {
     GameState game_state = {0};
+    
+    // note(abiab): load high score
+    FILE * file = fopen(SAVE_FILE_PATH, "r");
+    if(file) {
+        fscanf(file, "%d", &game_state.high_score);
+    }
+    fclose(file);
     
     // note(abiab): init snake 
     srandom(time(0));
@@ -200,6 +225,7 @@ GameState GameStateInit() {
     game_state.snake.direction   = DIR_RIGHT;
     
     game_state.food = GetFreeSpace(&game_state.snake);
+    
     
     return game_state;
 }
@@ -219,7 +245,7 @@ void DeathStep(DeathState * death_state, GameState * game_state) {
     
     DrawFood(game_state->food);
     
-    // Death Animation;
+    // Death Animation; todo sound
     Snake * snake = &game_state->snake;
     if(death_state->frames_dead < DEATH_TIME_STEP * snake->body_length)
     {
@@ -243,6 +269,11 @@ void DeathStep(DeathState * death_state, GameState * game_state) {
         
         DrawRect(front_rect, SNAKE_COLOUR);
     }
+    else {
+        death_state->frames_dead = 0;
+        current_state = STATE_GAME;
+        *game_state = GameStateInit();
+    }
     
-    // You died Text and menu
+    // todo: You died text and menu
 }
