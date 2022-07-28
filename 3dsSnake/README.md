@@ -1,3 +1,2 @@
-# template
-
-This is a template for starting new 3DS libctru projects.
+#Snake for 3DS
+Snake clone for the 3DS.
