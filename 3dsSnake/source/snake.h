@@ -136,6 +136,7 @@ struct GameState {
     v2i food;
     int score;
     int high_score;
+    int snake_self_collide;
 };
 
 void GameStep(GameState * game_state) {
@@ -179,15 +180,7 @@ void GameStep(GameState * game_state) {
                              snake->body[0].y >= BOARD_HEIGHT ||
                              snake->body[0].y <  0);
         
-        int snake_self_collide = 0;
-        for(int i = 1; i < snake->body_length; ++i) {
-            if(snake->body[0].x == snake->body[i].x && snake->body[0].y == snake->body[i].y) {
-                snake_self_collide = 1;
-                break;
-            }
-        }
-        
-        if(out_of_bounds || snake_self_collide) {
+        if(out_of_bounds || game_state->snake_self_collide) {
             current_state = STATE_DEATH;
             FILE * file = fopen(SAVE_FILE_PATH, "w");
             if(file) {
@@ -196,6 +189,19 @@ void GameStep(GameState * game_state) {
             fclose(file);
         }
     }
+    
+    //
+    // Checking for the self collision across multiple frames
+    //
+    
+    for(int i = game_state->steps_since_move+1; i < snake->body_length; i += TIME_STEPS_PER_MOVE) {
+        if(snake->body[0].x == snake->body[i].x && snake->body[0].y == snake->body[i].y) {
+            game_state->snake_self_collide = 1;
+            break;
+        }
+    }
+    
+    
     
     //
     // Draw Everything
@@ -222,6 +228,8 @@ GameState GameStateInit() {
     // note(abiab): init snake 
     srandom(time(0));
     game_state.snake.body_length = 3;
+    game_state.snake.body[0].x = 2;
+    game_state.snake.body[1].x = 1;
     game_state.snake.direction   = DIR_RIGHT;
     
     game_state.food = GetFreeSpace(&game_state.snake);
